@@ -13,7 +13,7 @@ public class ServerMain {
 
             while(true) {
                 Socket clientSocket = serverSocket.accept();
-                handleClient(clientSocket,playerPool);
+                new Thread(() -> handleClient(clientSocket,playerPool)).start();
             }
         } catch(IOException e) {
             //Todo
@@ -23,15 +23,11 @@ public class ServerMain {
     private static void handleClient(Socket socket,PlayerPool playerPool) {
         try {
             PlayerHandler playerHandler = new PlayerHandler(socket);
-            GameSession gameSession = playerPool.addPlayer(playerHandler);
-            if(gameSession != null){
-                new Thread()
-            }
+            new Thread(playerHandler).start();
+            playerPool.setupPlayerHandler(playerHandler);
         } catch (IOException e) {
             //Todo
         }
     }
-
-    private void listenToClient()
 }
 

@@ -1,23 +1,96 @@
 package Server;
 
-import java.util.concurrent.*;
+import java.util.Timer;
+import java.util.TimerTask;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Random;
+import java.util.concurrent.ConcurrentHashMap;
 
 public class PlayerPool {
-    private ConcurrentLinkedQueue<PlayerHandler> waitingPlayerHandlers = new ConcurrentLinkedQueue<>();
+    private final ConcurrentHashMap<String,GameSession> baitingGameSessions = new ConcurrentHashMap<>();
+    private final ConcurrentHashMap<String, PlayerHandler> waitingPlayerHandlers = new ConcurrentHashMap<>();
 
-    public GameSession addPlayer(PlayerHandler playerHandler) {
-        waitingPlayerHandlers.offer(playerHandler);
-        return matchPlayers();
+    private RankSystem rankSystem;
+    public PlayerPool(){
+        rankSystem = new RankSystem();
     }
 
-    private GameSession matchPlayers() {
-        while (waitingPlayerHandlers.size() >= 2) {
-            PlayerHandler p1 = waitingPlayerHandlers.poll();
-            PlayerHandler p2 = waitingPlayerHandlers.poll();
-            GameSession session = new GameSession(p1, p2);
-            return session;
+    public void setupPlayerHandler(PlayerHandler playerHandler) {
+        playerHandler.setRemovePlayerFromPoolFunction(this::removePlayer);
+        playerHandler.setContinueGameFunction(this::addPlayerHandler);
+        playerHandler.setFetchRankFunction(rankSystem::fetchRank);
+        playerHandler.setUpdateRankFunction(rankSystem::updateRank);
+        playerHandler.setHandlePlayerDisconnectFunction(this::handlePlayerDisconnected);
+        if(!checkReconnected(playerHandler)){
+            addPlayerHandler(playerHandler);
         }
-        return null;
-    }
-}
+        rankSystem.addPlayer(playerHandler.getUsername());
+        playerHandler.sendRank();
 
+    }
+
+    public void addPlayerHandler(PlayerHandler playerHandler){
+        waitingPlayerHandlers.put(playerHandler.getUsername(), playerHandler);
+        matchPlayers();
+    }
+
+    private void matchPlayers() {
+        synchronized(waitingPlayerHandlers) {
+            while (waitingPlayerHandlers.size() >= 2) {
+                PlayerHandler p1 = removeRandomPlayer();
+                PlayerHandler p2 = removeRandomPlayer();
+                new GameSession(p1, p2);
+            }
+        }
+    }
+
+    private PlayerHandler removeRandomPlayer() {
+        List<String> keys = new ArrayList<>(waitingPlayerHandlers.keySet());
+        Random random = new Random();
+        String randomKey = keys.get(random.nextInt(keys.size()));
+        return waitingPlayerHandlers.remove(randomKey);
+    }
+
+    public void removePlayer(String username){
+        waitingPlayerHandlers.remove(username);
+    }
+
+    private boolean checkReconnected(PlayerHandler playerHandler){
+        if(baitingGameSessions.containsKey(playerHandler.getUsername())){
+            GameSession gameSession = baitingGameSessions.get(playerHandler.getUsername());
+            baitingGameSessions.remove(playerHandler.getUsername());
+            gameSession.playerReconnect(playerHandler);
+            return true;
+        }
+        return false;
+    }
+
+    public void handlePlayerDisconnected(PlayerHandler playerHandler, GameSession gameSession) {
+        String disconnectedPlayerUsername = playerHandler.getUsername();
+        String oppositePlayerUsername = gameSession.returnOppositePlayer(playerHandler).getUsername();
+        baitingGameSessions.compute(disconnectedPlayerUsername, (key, existingGameSession) -> {
+            if (existingGameSession != null) {
+                Timer timer = existingGameSession.getStopTimer();
+                if (timer != null) {
+                    timer.cancel();
+                }
+                baitingGameSessions.remove(oppositePlayerUsername);
+                existingGameSession.gameCrashEnd();
+                return null;
+            } else {
+                Timer timer = new Timer();
+                TimerTask task = new TimerTask() {
+                    @Override
+                    public void run() {
+                        baitingGameSessions.remove(disconnectedPlayerUsername);
+                        gameSession.gameCrashEnd();
+                    }
+                };
+                gameSession.setStopTimer(timer,task);
+                return gameSession;
+            }
+        });
+    }
+
+}
