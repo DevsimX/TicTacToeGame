@@ -49,12 +49,13 @@ public class GameSession{
     }
 
     private void broadcastCurrentTurnMessage(){
+        currentPlayer.getOut().println("TURN");
         String username = this.currentPlayer.getUsername();
-        String msg = "NEXT:" + username +":"+currentPlayer.fetchRank()+ ":"+this.currentPlayer.getSymbol();
+        String msg = "LABEL:" + currentPlayer.fetchRank()+ " " + currentPlayer.getUsername() + "'s turn("+this.currentPlayer.getSymbol()+")";
         broadcastMessage(msg);
     }
 
-    public char checkWin() {
+    public synchronized char checkWin() {
         //Check each row
         for (int i = 0; i < 3; i++) {
             if (board[i][0] == board[i][1] && board[i][1] == board[i][2] && board[i][0] != '-') {
@@ -81,7 +82,7 @@ public class GameSession{
         return '-';
     }
 
-    private boolean isBoardFull() {
+    private synchronized boolean isBoardFull() {
         for (int i = 0; i < 3; i++) {
             for (int j = 0; j < 3; j++) {
                 if (board[i][j] == '-') {

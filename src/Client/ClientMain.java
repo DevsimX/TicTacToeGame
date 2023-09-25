@@ -28,7 +28,7 @@ public class ClientMain {
     private static void disconnectedFromServer(){
         player.setPlayerState(Player.PlayerState.WAITING_FOR_GAME);
         SwingUtilities.invokeLater(() -> {
-            gui.showServerLostDialog();
+            gui.gameEndSinceServerCrash();
         });
     }
 
@@ -42,7 +42,8 @@ public class ClientMain {
                         gui.appendChat(parts[1], parts[2]);
                     });
                 } else if (line.equals("START")) {
-                    player.setPlayerState(Player.PlayerState.IN_GAME);
+                    // Game start
+                    player.gameStart();
                 } else if (line.startsWith("WINNER:") || line.equals("DRAW")) {
                     if(line.startsWith("WINNER:")){
                         String[] parts = line.split(":", 2);
@@ -53,11 +54,12 @@ public class ClientMain {
                     }else {
                         SwingUtilities.invokeLater(() -> {
                             gui.gameEnd("Match Drawn!");
-                        });                    }
+                        });
+                    }
                     player.gameEnd();
                 } else if(line.startsWith("SYMBOL:")){
                     String[] parts = line.split(":",2);
-                    player.setSymbol(parts[1].charAt(0));
+                    player.setSymbol(parts[1]);
                 } else if(line.startsWith("ERROR:")){
                     String[] parts = line.split(":",2);
                     gui.showErrorDialog(parts[1]);
@@ -67,20 +69,16 @@ public class ClientMain {
                     int y = Integer.parseInt(parts[2]);
                     String symbol = parts[3];
                     gui.updateBoard(x,y,symbol);
-                } else if(line.startsWith("NEXT:")){
-                    String[] parts = line.split(":",4);
-                    String username = parts[1];
-                    String rank = parts[2];
-                    String symbol = parts[3];
-                    if(username.equals(player.getUsername())){
-                        player.setRoundState(Player.RoundState.MY_TURN);
-                    }
+                } else if(line.startsWith("LABEL:")){
+                    String[] parts = line.split(":",2);
+                    String msg = parts[1];
                     SwingUtilities.invokeLater(() -> {
-                        gui.changeStatus(rank + " "+username+"'s",symbol);
+                        gui.changeStatusLabel(msg);
                     });
                 } else if(line.startsWith("RANK:")){
                     String[] parts = line.split(":",2);
                     String rank = parts[1];
+                    System.out.println(rank);
                     player.setRank(rank);
                     gui.updateRankInfo();
                 } else if(line.equals("STOP")){
@@ -92,6 +90,8 @@ public class ClientMain {
                     player.setPlayerState(Player.PlayerState.IN_GAME);
                     String[] parts = line.split(":",10);
                     gui.loadBoard(parts);
+                } else if(line.equals("TURN")){
+                    gui.myTurnStart();
                 }
                 else {
                     //TODO

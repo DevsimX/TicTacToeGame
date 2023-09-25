@@ -64,7 +64,10 @@ public class PlayerHandler implements Runnable {
             // Other error handling
         }
 
-        removePlayerFromPoolFunction.accept(username);
+        // If still waiting, remove from the waiting list
+        if(state == PlayerState.WAITING_FOR_GAME)
+            removePlayerFromPoolFunction.accept(username);
+
         handlePlayerDisconnectFunction.accept(this,this.gameSession);
         if (gameSession != null) {
             gameSession.notifyPlayerDisconnected(this);

@@ -23,7 +23,6 @@ public class ServerMain {
     private static void handleClient(Socket socket,PlayerPool playerPool) {
         try {
             PlayerHandler playerHandler = new PlayerHandler(socket);
-            new Thread(playerHandler).start();
             playerPool.setupPlayerHandler(playerHandler);
         } catch (IOException e) {
             //Todo

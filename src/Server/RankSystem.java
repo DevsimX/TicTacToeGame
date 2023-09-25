@@ -1,82 +1,73 @@
 package Server;
 
 import java.util.*;
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.locks.ReadWriteLock;
-import java.util.concurrent.locks.ReentrantReadWriteLock;
+import java.util.concurrent.ConcurrentSkipListSet;
+import java.util.concurrent.atomic.AtomicInteger;
 
 public class RankSystem {
-    private final ConcurrentHashMap<String, Integer> scores;
-    private final List<String> orderedUsers;
-    private final Set<String> uniqueUsers; // To ensure uniqueness of usernames
-    private final ReadWriteLock lock;
+    private static class Player implements Comparable<Player> {
+        final String username;
+        int score;
+        final int timestamp;
+
+        Player(String username, int score, int timestamp) {
+            this.username = username;
+            this.score = score;
+            this.timestamp = timestamp;
+        }
+
+        @Override
+        public int compareTo(Player other) {
+            if (this.score != other.score) {
+                return Integer.compare(other.score, this.score); // higher score first
+            }
+            return Integer.compare(this.timestamp, other.timestamp); // earlier timestamp first
+        }
+    }
+
+    private final ConcurrentSkipListSet<Player> rankedPlayers;
+    private final Map<String, Player> playerByUsername;
+    private final AtomicInteger timestampGenerator;
 
     public RankSystem() {
-        scores = new ConcurrentHashMap<>();
-        orderedUsers = new ArrayList<>();
-        uniqueUsers = new HashSet<>();
-        lock = new ReentrantReadWriteLock();
+        rankedPlayers = new ConcurrentSkipListSet<>();
+        playerByUsername = new HashMap<>();
+        timestampGenerator = new AtomicInteger(1);
     }
 
-    public void addPlayer(String username) {
-        lock.writeLock().lock();
-        try {
-            if(!uniqueUsers.contains(username)) {
-                scores.put(username, 0);
-                uniqueUsers.add(username);
-                insertUserInOrder(username, 0);
-            }
-        } finally {
-            lock.writeLock().unlock();
+    public synchronized void addPlayer(String username) {
+        Player player = new Player(username, 0, timestampGenerator.getAndIncrement());
+        rankedPlayers.add(player);
+        playerByUsername.put(username, player);
+    }
+
+    public synchronized void updateRank(String username, String result) {
+        int scoreChange = switch (result) {
+            case "WIN" -> 5;
+            case "DRAW" -> 2;
+            case "LOSE" -> -5;
+            default -> throw new IllegalArgumentException("Unknown result: " + result);
+        };
+
+        Player player = playerByUsername.get(username);
+        if (player != null) {
+            rankedPlayers.remove(player);
+            player.score += scoreChange;
+            rankedPlayers.add(player);
         }
     }
 
-    public void updateRank(String username, String result) {
-        lock.writeLock().lock();
-        try {
-            int currentScore = scores.getOrDefault(username, 0);
-            scores.put(username, currentScore);
-            orderedUsers.remove(username);
-
-            switch (result) {
-                case "WIN":
-                    currentScore += 5;
-                    break;
-                case "DRAW":
-                    currentScore += 2;
-                    break;
-                case "LOSE":
-                    currentScore -= 5;
-                    break;
-                default:
-                    throw new IllegalArgumentException("Unknown result: " + result);
-            }
-
-            scores.put(username, currentScore);
-            insertUserInOrder(username, currentScore);
-        } finally {
-            lock.writeLock().unlock();
-        }
-    }
-
-    private void insertUserInOrder(String username, int score) {
-        // Use binary search to find the correct position
-        int position = Collections.binarySearch(orderedUsers, username, (u1, u2) -> scores.get(u2).compareTo(scores.get(u1)));
-
-        // If not found, binarySearch returns (-(insertion point) - 1)
-        if (position < 0) {
-            position = -(position + 1);
-        }
-
-        orderedUsers.add(position, username);
-    }
     public int fetchRank(String username) {
-        lock.readLock().lock();
-        try {
-            int rank = orderedUsers.indexOf(username);
-            return (rank != -1) ? rank + 1 : -1;
-        } finally {
-            lock.readLock().unlock();
+        int rank = 1;
+        Player target = playerByUsername.get(username);
+        if (target == null) return -1;
+
+        for (Player player : rankedPlayers) {
+            if (player.username.equals(username)) {
+                return rank;
+            }
+            rank++;
         }
+        return -1;
     }
 }

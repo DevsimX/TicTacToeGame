@@ -35,12 +35,10 @@ public class TicTacToeGUI {
                         if(player.getRoundState() == Player.RoundState.MY_TURN){
                             // Handle board button click
                             JButton source = (JButton) e.getSource();
-                            if (!source.getText().equals("")) {
+                            if (!source.getText().isEmpty()) {
                                 showErrorDialog("This slot is not available!");
                             }else{
-                                player.sendMove(finalI, finalJ);
-                                timer.stop();
-                                resetTimer();
+                                handleMove(finalI,finalJ);
                             }
                         }else
                             showErrorDialog("It is not your turn now!");
@@ -70,7 +68,7 @@ public class TicTacToeGUI {
                 if (chatArea.getLineCount() > 10) {
                     chatArea.replaceRange("", 0, chatArea.getText().indexOf("\n") + 1);
                 }
-                player.sendChat(player.getUsername()+":"+chatInput.getText());
+                player.sendChat(player.getRank() + " "+player.getUsername()+":"+chatInput.getText());
                 chatInput.setText("");
             }
         });
@@ -80,27 +78,26 @@ public class TicTacToeGUI {
 
         quitButton = new JButton("Quit");
         quitButton.addActionListener(e -> {
+            String[] options = {"Quit Game", "Cancel"};
             int choice = JOptionPane.showOptionDialog(frame,
-                    "Do you want to find a new match or quit?",
-                    "Game Over",
+                    "Do you want to quit the game?",
+                    "Exit Confirmation",
                     JOptionPane.YES_NO_OPTION,
                     JOptionPane.QUESTION_MESSAGE,
                     null,
-                    new String[]{"Find Match", "Quit"},
-                    "default");
+                    options,
+                    options[1]);
 
-            if (choice == JOptionPane.NO_OPTION) {
-                System.exit(0);
-            } else {
-                // Logic for finding a new match
-                statusLabel.setText("Finding PlayerHandler...");
-                for (int i = 0; i < 3; i++) {
-                    for (int j = 0; j < 3; j++) {
-                        boardButtons[i][j].setText("");
-                    }
-                }
+            switch (choice) {
+                case JOptionPane.YES_OPTION:
+                    System.exit(0);
+                    break;
+                case JOptionPane.NO_OPTION:
+                default:
+                    break;
             }
         });
+
 
         countdownTimerLabel = new JLabel("Timer: 20");
         frame.add(countdownTimerLabel, BorderLayout.WEST);
@@ -141,13 +138,8 @@ public class TicTacToeGUI {
         chatArea.append(username + ": " + msg + "\n");
     }
 
-    public void changeStatus(String username, String symbol){
-        statusLabel.setText(username + " turn (" + symbol + ")");
-        if (player.getRoundState() == Player.RoundState.MY_TURN) {
-            timer.start();
-        } else {
-            timer.stop();
-        }
+    public void changeStatusLabel(String label){
+        statusLabel.setText(label);
     }
 
     public void gameStop(){
@@ -157,6 +149,8 @@ public class TicTacToeGUI {
     }
 
     public void gameEnd(String msg){
+        resetTimer();
+        resetChatArea();
         boolean findMatch = showGameEndDialog(msg);
         if (!findMatch) {
             System.exit(0);
@@ -173,6 +167,10 @@ public class TicTacToeGUI {
                 boardButtons[i][j].setText("");
             }
         }
+    }
+
+    private void resetChatArea(){
+        chatArea.setText("");
     }
 
     private boolean showGameEndDialog(String msg){
@@ -192,13 +190,17 @@ public class TicTacToeGUI {
         boardButtons[x][y].setText(symbol);
     }
 
+    private void handleMove(int x, int y){
+        player.sendMove(x, y);
+        player.setRoundState(Player.RoundState.NOT_MY_TURN);
+        timer.stop();
+        resetTimer();
+    }
+
     private void resetTimer(){
         countdownValue = 20;
         countdownTimerLabel.setText("Timer: " + countdownValue);
     }
-
-
-
     private void handleTimeout() {
         ArrayList<String> emptySlots = getEmptySlots();
         if (emptySlots.isEmpty()) return;
@@ -209,8 +211,7 @@ public class TicTacToeGUI {
         String[] line = randomSlot.split(":",2);
         int x = Integer.parseInt(line[0]);
         int y = Integer.parseInt(line[1]);
-        player.sendMove(x,y);
-        resetTimer();
+        handleMove(x,y);
     }
 
     private ArrayList<String> getEmptySlots() {
@@ -231,7 +232,12 @@ public class TicTacToeGUI {
         }
     }
 
-    public void showServerLostDialog(){
+    public void myTurnStart(){
+        player.setRoundState(Player.RoundState.MY_TURN);
+        timer.start();
+    }
+
+    public void gameEndSinceServerCrash(){
         timer.stop();
         JOptionPane pane = new JOptionPane("Server unavailable. The application will close in 5 seconds.", JOptionPane.ERROR_MESSAGE);
         JDialog dialog = pane.createDialog(frame, "Error");

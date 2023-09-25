@@ -22,12 +22,14 @@ public class PlayerPool {
         playerHandler.setFetchRankFunction(rankSystem::fetchRank);
         playerHandler.setUpdateRankFunction(rankSystem::updateRank);
         playerHandler.setHandlePlayerDisconnectFunction(this::handlePlayerDisconnected);
+        rankSystem.addPlayer(playerHandler.getUsername());
+
+        new Thread(playerHandler).start();
+
+        playerHandler.sendRank();
         if(!checkReconnected(playerHandler)){
             addPlayerHandler(playerHandler);
         }
-        rankSystem.addPlayer(playerHandler.getUsername());
-        playerHandler.sendRank();
-
     }
 
     public void addPlayerHandler(PlayerHandler playerHandler){
@@ -59,6 +61,7 @@ public class PlayerPool {
     private boolean checkReconnected(PlayerHandler playerHandler){
         if(baitingGameSessions.containsKey(playerHandler.getUsername())){
             GameSession gameSession = baitingGameSessions.get(playerHandler.getUsername());
+            gameSession.getStopTimer().cancel();
             baitingGameSessions.remove(playerHandler.getUsername());
             gameSession.playerReconnect(playerHandler);
             return true;

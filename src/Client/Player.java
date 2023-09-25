@@ -17,7 +17,7 @@ public class Player {
     private PlayerState playerState = PlayerState.WAITING_FOR_GAME;
     private RoundState roundState = RoundState.NOT_MY_TURN;
     private String rank;
-    private char symbol;
+    private String symbol;
 
     public Player(String username, Socket socket) throws IOException {
         this.socket = socket;
@@ -45,6 +45,7 @@ public class Player {
     }
 
     public void gameEnd(){
+        this.symbol = "";
         this.playerState = PlayerState.WAITING_FOR_GAME;
     }
 
@@ -80,11 +81,11 @@ public class Player {
         this.roundState = roundState;
     }
 
-    public char getSymbol() {
+    public String getSymbol() {
         return symbol;
     }
 
-    public void setSymbol(char symbol) {
+    public void setSymbol(String symbol) {
         this.symbol = symbol;
     }
 
@@ -94,6 +95,10 @@ public class Player {
 
     public void setRank(String rank) {
         this.rank = rank;
+    }
+
+    public void gameStart(){
+        this.playerState = PlayerState.IN_GAME;
     }
 }
 
