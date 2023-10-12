@@ -1,0 +1,29 @@
+@startuml
+'https://plantuml.com/component-diagram
+
+
+node "Client Instance" {
+    [Client GUI] -right-> [Client Handler]: user input
+    [Client Handler] -left-> [Client GUI]: update
+    [Client Handler] -down-> [Socket]: initiate
+    [Client Handler] -up-> [Client]: store info
+    [Socket] -up-> [Client Handler]: communicate
+}
+
+node "Server" {
+
+    [Server Handler] -down-> [Rank System]: initiate
+    [Server Handler] -left-> [Player Socket]: create
+    [Server Handler] -right-> [Player Handler]: create
+
+    [Game Session] -down-> [Rank System]: update
+
+    [Player Pool] -down-> [Player Handler]: manage
+    [Player Pool] -down-> [Game Session]: create
+
+    [Player Handler] -left- [Player Socket]: communicate
+}
+
+[Socket] -right-> [Player Socket]: communicate
+
+@enduml

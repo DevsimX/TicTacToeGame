@@ -62,14 +62,6 @@ public class Player {
         return in;
     }
 
-    public Socket getSocket() {
-        return socket;
-    }
-
-    public PrintWriter getOut() {
-        return out;
-    }
-
     public PlayerState getPlayerState() {
         return playerState;
     }
@@ -85,11 +77,6 @@ public class Player {
     public void setRoundState(RoundState roundState) {
         this.roundState = roundState;
     }
-
-    public String getSymbol() {
-        return symbol;
-    }
-
     public void setSymbol(String symbol) {
         this.symbol = symbol;
     }
