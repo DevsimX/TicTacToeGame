@@ -74,31 +74,31 @@ public class PlayerPool {
         return false;
     }
 
-    public void handlePlayerDisconnected(PlayerHandler playerHandler, GameSession gameSession) {
+    public synchronized void handlePlayerDisconnected(PlayerHandler playerHandler, GameSession gameSession) {
         String disconnectedPlayerUsername = playerHandler.getUsername();
-        String oppositePlayerUsername = gameSession.returnOppositePlayer(playerHandler).getUsername();
-        baitingGameSessions.compute(disconnectedPlayerUsername, (key, existingGameSession) -> {
-            if (existingGameSession != null) {
-                Timer timer = existingGameSession.getStopTimer();
-                if (timer != null) {
-                    timer.cancel();
-                }
-                baitingGameSessions.remove(oppositePlayerUsername);
-                existingGameSession.gameCrashEnd();
-                return null;
-            } else {
-                Timer timer = new Timer();
-                TimerTask task = new TimerTask() {
-                    @Override
-                    public void run() {
-                        baitingGameSessions.remove(disconnectedPlayerUsername);
-                        gameSession.gameCrashEnd();
-                    }
-                };
-                gameSession.setStopTimer(timer,task);
-                return gameSession;
+        String oppositePlayerUsername = gameSession != null ? gameSession.returnOppositePlayer(playerHandler).getUsername():"";
+        if (baitingGameSessions.containsKey(oppositePlayerUsername)) {
+            GameSession existingGameSession = baitingGameSessions.get(oppositePlayerUsername);
+            Timer timer = existingGameSession.getStopTimer();
+            if (timer != null) {
+                timer.cancel();
             }
-        });
+            baitingGameSessions.remove(oppositePlayerUsername);
+            baitingGameSessions.remove(disconnectedPlayerUsername);
+            existingGameSession.gameCrashEnd();
+            existingGameSession.clear();
+        } else {
+            Timer timer = new Timer();
+            TimerTask task = new TimerTask() {
+                @Override
+                public void run() {
+                    baitingGameSessions.remove(disconnectedPlayerUsername);
+                    gameSession.gameCrashEnd();
+                }
+            };
+            gameSession.setStopTimer(timer, task);
+            baitingGameSessions.put(disconnectedPlayerUsername, gameSession);
+        }
     }
 
 }

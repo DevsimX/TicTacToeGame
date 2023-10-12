@@ -70,7 +70,7 @@ public class TicTacToeGUI {
             } else if(chatInput.getText().isEmpty() || chatInput.getText().length() > 20){
                 showErrorDialog("The length of your message should be in 1 to 20!");
             }else{
-                if (chatArea.getLineCount() > 10) {
+                if (chatArea.getLineCount() > 11) {
                     chatArea.replaceRange("", 0, chatArea.getText().indexOf("\n") + 1);
                 }
                 player.sendChat(player.getRank() + " "+player.getUsername()+":"+chatInput.getText());
@@ -141,6 +141,9 @@ public class TicTacToeGUI {
 
     public void appendChat(String username, String msg){
         chatArea.append(username + ": " + msg + "\n");
+        if (chatArea.getLineCount() > 11) {
+            chatArea.replaceRange("", 0, chatArea.getText().indexOf("\n") + 1);
+        }
     }
 
     public void changeStatusLabel(String label){

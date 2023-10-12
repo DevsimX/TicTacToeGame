@@ -108,6 +108,7 @@ public class GameSession{
     private void gameEnd(){
         this.playerHandlerX.removeGameSession();
         this.playerHandlerO.removeGameSession();
+        this.clear();
     }
 
     public synchronized void processPlayerMove(PlayerHandler playerHandler, int x, int y){
@@ -151,6 +152,16 @@ public class GameSession{
         playerHandlerO.updateRank("DRAW");
         broadcastMessage("DRAW");
         gameEnd();
+    }
+
+    public void clear(){
+        this.playerHandlerX = null;
+        this.playerHandlerO = null;
+        this.currentPlayer = null;
+        if(this.stopTimer != null)
+            stopTimer.cancel();
+        this.stopTimer = null;
+        this.board = null;
     }
 
     public PlayerHandler returnOppositePlayer(PlayerHandler playerHandler){

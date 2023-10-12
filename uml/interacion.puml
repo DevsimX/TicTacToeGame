@@ -1,0 +1,70 @@
+@startuml
+participant "Player2" as P2
+participant "Player1" as P1
+participant "Socket" as ST
+participant "Server" as Server
+participant "Player Pool" as PP
+participant "Game Session" as GS
+participant "Rank System" as RS
+
+
+alt Initiate Server
+    Server -> Server: Receive port and IP
+    Server -> Server: Start Service
+end
+
+alt Player1 Connect
+    P1 -> Server: Connect request
+    ST -> ST: Set up socket
+    Server -> P1: Connect accept
+    Server -> PP: Add player1
+    Server -> RS: Initiate rank for player1
+    PP -> PP: Waiting for match
+end
+
+alt Player2 Connect
+    P2 -> Server: Connect request
+    ST -> ST: Set up socket
+    Server -> P2: Connect accept
+    Server -> PP: Add player2
+    Server -> RS: Initiate rank for player2
+    PP -> PP: Game found
+end
+
+alt Game Start
+    PP -> GS: Game initiate
+    GS -> ST: Symbol and turn allocation
+    ST -> P1: Broadcast
+    ST -> P2: Broadcast
+    alt Player Action
+        P1 -> ST: Actions (move or chat)
+        ST -> GS: Deliver actions
+        GS -> GS: Update game
+        GS -> GS: Check winner
+        GS -> ST: Instructions
+        ST -> P2: Update local game
+    end
+    alt Player Disconnect
+        P1 -> P1: Disconnect
+        ST -> GS: Player disconnect
+        GS -> GS: Game stop for 30s
+        alt Reconnect
+        GS -> P2: Notify
+        P1 -> Server: Connect request
+        ST -> ST: Set up socket
+        Server -> P1: Connect accept
+        Server -> PP: Add player1
+        PP -> PP: Check reconnect
+        PP -> GS: Game recover
+        else Give up
+        GS -> GS: Game ends
+
+    end
+
+end
+
+alt Game End
+GS -> GS: Game ends
+GS -> PP: Add players
+end
+@enduml
