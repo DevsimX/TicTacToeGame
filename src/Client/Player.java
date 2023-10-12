@@ -100,5 +100,9 @@ public class Player {
     public void gameStart(){
         this.playerState = PlayerState.IN_GAME;
     }
+
+    public void quitGame(){
+        this.out.println("QUIT");
+    }
 }
 

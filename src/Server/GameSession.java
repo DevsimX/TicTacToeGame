@@ -196,4 +196,11 @@ public class GameSession{
         }
         return res.toString();
     }
+
+    public void handleQuit(PlayerHandler playerHandler){
+        PlayerHandler winner = playerHandler == playerHandlerX? playerHandlerO : playerHandlerX;
+        winner.updateRank("WIN");
+        broadcastMessage("WINNER:" + winner.getUsername());
+        gameEnd();
+    }
 }

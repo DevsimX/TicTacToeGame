@@ -90,6 +90,7 @@ public class TicTacToeGUI {
 
             switch (choice) {
                 case JOptionPane.YES_OPTION:
+                    player.quitGame();
                     System.exit(0);
                     break;
                 case JOptionPane.NO_OPTION:

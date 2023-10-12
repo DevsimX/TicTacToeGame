@@ -55,6 +55,8 @@ public class PlayerHandler implements Runnable {
                             String username = parts[1];
                             String msg = parts[2];
                             gameSession.broadcastChatMsg(username,msg);
+                        } else if(line.equals("QUIT")){
+                            gameSession.handleQuit(this);
                         }
                         // Handle other in-game messages
                         break;
