@@ -1,5 +1,9 @@
+/*
+ * Name: Yutian
+ * Surname: Xia
+ * Student ID: 1252909
+ */
 package Server;
-
 import java.io.*;
 import java.net.Socket;
 import java.util.function.BiConsumer;
@@ -32,7 +36,6 @@ public class PlayerHandler implements Runnable {
 
     @Override
     public void run() {
-        // Listen for messages from this client and process them
         try {
             String line;
             while ((line = in.readLine()) != null) {
@@ -42,7 +45,6 @@ public class PlayerHandler implements Runnable {
                             this.continueGameFunction.accept(this);
                             this.sendRank();
                         }
-                        // Handle messages specific to waiting state
                         break;
                     case IN_GAME:
                         if (line.startsWith("MOVE:") && gameSession != null) {
@@ -58,7 +60,6 @@ public class PlayerHandler implements Runnable {
                         } else if(line.equals("QUIT")){
                             gameSession.handleQuit(this);
                         }
-                        // Handle other in-game messages
                         break;
                 }
             }
@@ -66,7 +67,6 @@ public class PlayerHandler implements Runnable {
             // Other error handling
         }
 
-        // If still waiting, remove from the waiting list
         if(state == PlayerState.WAITING_FOR_GAME)
             removePlayerFromPoolFunction.accept(username);
 

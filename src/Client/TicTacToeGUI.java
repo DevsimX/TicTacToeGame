@@ -1,3 +1,8 @@
+/*
+ * Name: Yutian
+ * Surname: Xia
+ * Student ID: 1252909
+ */
 package Client;
 
 import javax.swing.*;
@@ -109,7 +114,6 @@ public class TicTacToeGUI {
             countdownTimerLabel.setText("Timer: " + countdownValue);
 
             if (countdownValue <= 0) {
-                // handle timeout, pick random cell, etc.
                 handleTimeout();
                 timer.stop();
             }

@@ -1,0 +1,38 @@
+@startuml
+'https://plantuml.com/object-diagram
+
+object ClientGUI{
++board
++timer
++game state
++chat panel
+}
+object ClientHandler{
+sendMove()
+sendChat()
+listenToServer()
+handleMessageFromServer()
+}
+object Client{
++symbol
++rank
++state
+}
+object Socket{
++in stream
++out stream
+}
+object Server{
+}
+
+ClientGUI -> ClientHandler: quit
+ClientGUI -> ClientHandler: player moves
+ClientGUI -> ClientHandler: send message
+
+ClientHandler -> ClientGUI: update
+ClientHandler -> Socket: initiate
+ClientHandler -> Client: store info
+
+Socket - Server: communicate
+Socket - ClientHandler: communicate
+@enduml

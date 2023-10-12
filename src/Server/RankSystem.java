@@ -1,3 +1,8 @@
+/*
+ * Name: Yutian
+ * Surname: Xia
+ * Student ID: 1252909
+ */
 package Server;
 
 import java.util.*;
@@ -19,9 +24,9 @@ public class RankSystem {
         @Override
         public int compareTo(Player other) {
             if (this.score != other.score) {
-                return Integer.compare(other.score, this.score); // higher score first
+                return Integer.compare(other.score, this.score);
             }
-            return Integer.compare(this.timestamp, other.timestamp); // earlier timestamp first
+            return Integer.compare(this.timestamp, other.timestamp);
         }
     }
 

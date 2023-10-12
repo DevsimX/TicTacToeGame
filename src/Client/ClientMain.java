@@ -1,3 +1,8 @@
+/*
+ * Name: Yutian
+ * Surname: Xia
+ * Student ID: 1252909
+ */
 package Client;
 
 import javax.swing.*;
@@ -5,24 +10,34 @@ import java.io.IOException;
 import java.net.Socket;
 
 public class ClientMain {
-    public static final String SERVER_ADDRESS = "localhost";
-    public static final int SERVER_PORT = 12345;
     private static Player player;
-
     private static TicTacToeGUI gui;
 
     public static void main(String[] args) {
+        if (args.length < 3) {
+            System.err.println("Usage: java -jar client.jar username server_ip server_port");
+            return;
+        }
+
         String username = args[0];
+        String serverAddress = args[1];
+        int serverPort;
+        try {
+            serverPort = Integer.parseInt(args[2]);
+        } catch (NumberFormatException e) {
+            System.err.println("Invalid port number.");
+            return;
+        }
 
         try {
-            Socket socket = new Socket(SERVER_ADDRESS, SERVER_PORT);
+            Socket socket = new Socket(serverAddress, serverPort);
             player = new Player(username, socket);
             gui = new TicTacToeGUI(player);
             listenToServer();
+            disconnectedFromServer();
         } catch(IOException e) {
-            e.printStackTrace();
+            System.err.println("Failed to connect to the server: " + e.getMessage());
         }
-        disconnectedFromServer();
     }
 
     private static void disconnectedFromServer(){
@@ -78,7 +93,6 @@ public class ClientMain {
                 } else if(line.startsWith("RANK:")){
                     String[] parts = line.split(":",2);
                     String rank = parts[1];
-                    System.out.println(rank);
                     player.setRank(rank);
                     gui.updateRankInfo();
                 } else if(line.equals("STOP")){

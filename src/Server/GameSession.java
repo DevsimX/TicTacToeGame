@@ -1,6 +1,9 @@
+/*
+ * Name: Yutian
+ * Surname: Xia
+ * Student ID: 1252909
+ */
 package Server;
-
-
 import java.util.Objects;
 import java.util.Timer;
 import java.util.TimerTask;
@@ -50,7 +53,6 @@ public class GameSession{
 
     private void broadcastCurrentTurnMessage(){
         currentPlayer.getOut().println("TURN");
-        String username = this.currentPlayer.getUsername();
         String msg = "LABEL:" + currentPlayer.fetchRank()+ " " + currentPlayer.getUsername() + "'s turn("+this.currentPlayer.getSymbol()+")";
         broadcastMessage(msg);
     }

@@ -1,0 +1,31 @@
+@startuml
+'https://plantuml.com/object-diagram
+
+object GameSession{
++board
++timer
++game state
++chat panel
+}
+object PlayerHandler{
+sendMove()
+sendChat()
+listenToServer()
+handleMessageFromServer()
+}
+object Server{
++symbol
++rank
++state
+}
+object PlayerPool{
++in stream
++out stream
+}
+object PlayerSocket{
+}
+object RankSystem{
+}
+object Client
+
+@enduml
